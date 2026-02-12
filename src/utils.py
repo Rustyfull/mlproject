@@ -56,3 +56,16 @@ def evaluate_model(X_train,y_train,X_test,y_test,models,params) -> dict:
         logging.info("Evaluate Model failed")
         raise CustomException(e,sys)
 
+
+
+def load_object(file_path):
+    try:
+        with open(file_path,"rb") as file_obj:
+            obj = dill.load(file_obj)
+        return obj
+    except Exception as e:
+        raise CustomException(f"Error by Loading of the Object {str(e)}",sys)
+
+
+
+

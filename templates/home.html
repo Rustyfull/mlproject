@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Predictor - ML System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-focus:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .select-custom {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+        }
+
+        .result-appear {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-8 px-4">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold mb-2">🎓 Student Performance Predictor</h1>
+            <p class="text-purple-100 text-lg">ML-gestützte Vorhersage der Mathematikleistung</p>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Error Message -->
+        {% if error %}
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg result-appear" role="alert">
+            <p class="font-bold">⚠️ Fehler</p>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Success Result -->
+        {% if results %}
+        <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-2xl p-8 mb-8 card-shadow result-appear">
+            <div class="text-center">
+                <p class="text-lg mb-2 opacity-90">Vorhergesagter Mathematik-Score</p>
+                <div class="text-7xl font-bold mb-2">{{ results }}</div>
+                <p class="text-lg opacity-90">von 100 Punkten</p>
+
+                {% if results >= 90 %}
+                <div class="mt-4 inline-block bg-white bg-opacity-20 px-4 py-2 rounded-full">
+                    🌟 Exzellent!
+                </div>
+                {% elif results >= 75 %}
+                <div class="mt-4 inline-block bg-white bg-opacity-20 px-4 py-2 rounded-full">
+                    ⭐ Sehr gut!
+                </div>
+                {% elif results >= 60 %}
+                <div class="mt-4 inline-block bg-white bg-opacity-20 px-4 py-2 rounded-full">
+                    👍 Gut!
+                </div>
+                {% else %}
+                <div class="mt-4 inline-block bg-white bg-opacity-20 px-4 py-2 rounded-full">
+                    💪 Weiter üben!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Input Form -->
+        <div class="bg-white rounded-2xl p-8 card-shadow">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Schülerdaten eingeben</h2>
+
+            <form action="{{ url_for('predict_datapoint') }}" method="POST" class="space-y-5">
+                <!-- Gender -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Geschlecht *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="gender" value="male" class="mr-2" required>
+                            <span class="text-sm font-medium">👨 Männlich</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="gender" value="female" class="mr-2">
+                            <span class="text-sm font-medium">👩 Weiblich</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Race/Ethnicity -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ethnische Gruppe *</label>
+                    <select name="ethnicity" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg input-focus select-custom" required>
+                        <option value="">Bitte wählen...</option>
+                        <option value="group A">Gruppe A</option>
+                        <option value="group B">Gruppe B</option>
+                        <option value="group C">Gruppe C</option>
+                        <option value="group D">Gruppe D</option>
+                        <option value="group E">Gruppe E</option>
+                    </select>
+                </div>
+
+                <!-- Parental Education -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Bildungsstand der Eltern *</label>
+                    <select name="parental_level_of_education" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg input-focus select-custom" required>
+                        <option value="">Bitte wählen...</option>
+                        <option value="some high school">Teilweise Gymnasium</option>
+                        <option value="high school">Gymnasium</option>
+                        <option value="some college">Teilweise Hochschule</option>
+                        <option value="associate's degree">Associate Degree</option>
+                        <option value="bachelor's degree">Bachelor Degree</option>
+                        <option value="master's degree">Master Degree</option>
+                    </select>
+                </div>
+
+                <!-- Lunch Type -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Mittagessen-Typ *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="lunch" value="standard" class="mr-2" required>
+                            <span class="text-sm font-medium">🍽️ Standard</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="lunch" value="free/reduced" class="mr-2">
+                            <span class="text-sm font-medium">💰 Ermäßigt</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Test Prep -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Prüfungsvorbereitungskurs *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="test_preparation_course" value="completed" class="mr-2" required>
+                            <span class="text-sm font-medium">✅ Abgeschlossen</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="test_preparation_course" value="none" class="mr-2">
+                            <span class="text-sm font-medium">❌ Keine</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Writing Score -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Schreib-Score: <span id="writingValue" class="text-indigo-600 font-bold">50</span>/100 *
+                    </label>
+                    <input type="range" name="writing_score" min="0" max="100" value="50"
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                           oninput="document.getElementById('writingValue').textContent = this.value"
+                           required>
+                </div>
+
+                <!-- Reading Score -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Lese-Score: <span id="readingValue" class="text-indigo-600 font-bold">50</span>/100 *
+                    </label>
+                    <input type="range" name="reading_score" min="0" max="100" value="50"
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                           oninput="document.getElementById('readingValue').textContent = this.value"
+                           required>
+                </div>
+
+                <button type="submit" class="w-full gradient-bg text-white py-4 rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    🎯 Mathematik-Score vorhersagen
+                </button>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-indigo-100">
+            <h3 class="text-lg font-bold text-indigo-900 mb-3 flex items-center">
+                ℹ️ Über diese Vorhersage
+            </h3>
+            <p class="text-sm text-indigo-700 leading-relaxed">
+                Diese ML-gestützte Vorhersage basiert auf einem trainierten Machine Learning Modell mit
+                historischen Schülerdaten. Die Vorhersage berücksichtigt demografische Faktoren,
+                sozioökonomischen Hintergrund und bisherige akademische Leistungen.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
